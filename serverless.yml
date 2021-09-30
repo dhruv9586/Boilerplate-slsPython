@@ -1,0 +1,58 @@
+service: learning-python
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+frameworkVersion: '2'
+
+plugins:
+    - serverless-deployment-bucket
+    - serverless-python-requirements
+
+provider:
+    name: aws
+    runtime: python3.8
+    stage: ${opt:stage, 'dev'}
+    region: ${opt:region, 'us-east-1'}
+    environment:
+        BUCKET_NAME: ${self:custom.bucketName}
+    deploymentBucket:
+        name: learning-python-${self:provider.stage}-${self:provider.region}
+        serverSideEncryption: AES256
+    iamRoleStatements:
+        - Effect: 'Allow'
+          Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+              - 's3:ListBucket'
+          Resource:
+              [
+                  'arn:aws:s3:::${self:custom.bucketName}/*',
+                  'arn:aws:s3:::${self:custom.bucketName}'
+              ]
+
+custom:
+    bucketName: learning-python
+    pythonRequirements:
+        dockerizePip: true
+
+functions:
+    UploadObject:
+        handler: src/object/upload.handler
+    DeleteObject:
+        handler: src/object/delete.handler
+    GetObject:
+        handler: src/object/get.handler
+    ListObjects:
+        handler: src/bucket/list.handler
+    Request:
+        handler: src/object/request.handler
+    RDS:
+        handler: src/rds/crud.handler
+# resources:
+#  Resources:
+#    S3Bucket:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: learning-python
